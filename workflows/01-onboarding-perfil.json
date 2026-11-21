@@ -104,7 +104,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://TU-PROYECTO.supabase.co/rest/v1/perfiles?on_conflict=clerk_user_id",
+        "url": "https://pooesowzfbepxophssjb.supabase.co/rest/v1/perfiles?on_conflict=clerk_user_id",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
