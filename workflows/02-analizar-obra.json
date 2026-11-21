@@ -334,7 +334,7 @@
       "main": [
         [
           {
-            "node": "Gemini Vision (Google Cloud)",
+            "node": "Estructurar Contrato JSON",
             "type": "main",
             "index": 0
           }
