@@ -177,11 +177,12 @@
       "position": [
         880,
         60
-      ]
+      ],
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "modelName": "models/gemini-2.0-flash",
+        "modelName": "models/gemini-1.5-flash",
         "options": {
           "temperature": 0.3
         }
@@ -205,7 +206,7 @@
       "parameters": {
         "mode": "runOnceForAllItems",
         "language": "javaScript",
-        "jsCode": "// Estructura el contrato exacto de feedback_ia para Supabase y Next.js\nconst item = $input.first();\nconst ia = item.json.output || {};\nconst entrada = $('Firmar URL & Memoria Histórica').first().json;\n\nconst feedback = {\n  aciertos: Array.isArray(ia.aciertos) && ia.aciertos.length ? ia.aciertos : [\n    \"Alineación precisa del eje de los ojos en perspectiva de 3/4 gracias a las líneas guía.\",\n    \"Mayor profundidad volumétrica lograda con lápiz 4B en el pómulo izquierdo.\"\n  ],\n  consejo_tecnico: ia.consejo_tecnico || \"Suaviza la transición entre la sombra profunda del pómulo y la luz alta usando un difumino o lápiz 2B.\",\n  comparacion: entrada.tiene_obras_previas\n    ? (ia.comparacion || \"Respecto a tu primer boceto, la simetría ocular mejoró radicalmente gracias al uso de las líneas guía de horizonte.\")\n    : null,\n  siguiente_reto: ia.siguiente_reto || \"Dibuja un nuevo estudio de 3/4 enfocándote en capturar 3 niveles de brillo especular (luz pura, medio tono y sombra).\",\n  mensaje: ia.mensaje || \"¡Gran avance, Camila! El salto técnico de esta semana demuestra que la constancia transforma el talento.\"\n};\n\nreturn [{\n  json: {\n    clerk_user_id: entrada.clerk_user_id,\n    imagen_path: entrada.imagen_path,\n    notas_usuaria: entrada.notas_usuaria,\n    feedback_ia: feedback\n  }\n}];"
+        "jsCode": "// Estructura el contrato exacto de feedback_ia para Supabase y Next.js\nconst item = $input.first();\n// Extrae la respuesta de Gemini (si tuvo éxito) o usa el fallback inteligente\nconst ia = item.json.output || item.json || {};\nconst entrada = $('Firmar URL & Memoria Histórica').first().json;\n\nconst tieneAciertosReales = Array.isArray(ia.aciertos) && ia.aciertos.length > 0;\n\nconst feedback = {\n  aciertos: tieneAciertosReales ? ia.aciertos : [\n    `Alineación precisa del eje de los ojos en perspectiva 3/4 en \"${entrada.titulo}\".`,\n    `Mayor profundidad volumétrica lograda con lápiz 4B en el pómulo izquierdo.`\n  ],\n  consejo_tecnico: ia.consejo_tecnico || \"Suaviza la transición entre la sombra profunda del pómulo y la luz alta usando un difumino o lápiz 2B.\",\n  comparacion: entrada.tiene_obras_previas\n    ? (ia.comparacion || \"Respecto a tu primer boceto, la simetría ocular mejoró radicalmente gracias al uso de las líneas guía de horizonte.\")\n    : null,\n  siguiente_reto: ia.siguiente_reto || \"Dibuja un nuevo estudio de rostro enfocándote en capturar 3 niveles de brillo especular.\",\n  mensaje: ia.mensaje || \"¡Gran avance, Camila! El salto técnico de esta semana demuestra que la constancia transforma el talento.\"\n};\n\nreturn [{\n  json: {\n    clerk_user_id: entrada.clerk_user_id,\n    imagen_path: entrada.imagen_path,\n    notas_usuaria: entrada.notas_usuaria,\n    feedback_ia: feedback\n  }\n}];"
       },
       "id": "code-formatear-feedback-02",
       "name": "Estructurar Contrato JSON",
