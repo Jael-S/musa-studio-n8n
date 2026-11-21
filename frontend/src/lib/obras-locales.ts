@@ -1,6 +1,7 @@
+
 import type { Obra } from "@/components/SubirObra";
 
-type ObraGuardada = Omit<Obra, "imagen"> & {
+type ObraGuardada = Omit<Obra, "imagen" | "imagenBlob"> & {
   ownerId: string;
   imagenBlob: Blob;
   savedAt: number;
@@ -16,31 +17,48 @@ function abrirBase(): Promise<IDBDatabase> {
 
     request.onupgradeneeded = () => {
       const db = request.result;
+
       if (!db.objectStoreNames.contains(STORE_NAME)) {
-        const store = db.createObjectStore(STORE_NAME, { keyPath: "id" });
-        store.createIndex("ownerId", "ownerId", { unique: false });
+        const store = db.createObjectStore(STORE_NAME, {
+          keyPath: "id",
+        });
+
+        store.createIndex("ownerId", "ownerId", {
+          unique: false,
+        });
       }
     };
 
     request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
+    request.onerror = () =>
+      reject(request.error ?? new Error("No se pudo abrir IndexedDB."));
   });
 }
 
-export async function cargarObrasLocales(ownerId: string): Promise<Obra[]> {
+export async function cargarObrasLocales(
+  ownerId: string,
+): Promise<Obra[]> {
   const db = await abrirBase();
 
   try {
-    const guardadas = await new Promise<ObraGuardada[]>((resolve, reject) => {
-      const request = db
-        .transaction(STORE_NAME, "readonly")
-        .objectStore(STORE_NAME)
-        .index("ownerId")
-        .getAll(ownerId);
+    const guardadas = await new Promise<ObraGuardada[]>(
+      (resolve, reject) => {
+        const request = db
+          .transaction(STORE_NAME, "readonly")
+          .objectStore(STORE_NAME)
+          .index("ownerId")
+          .getAll(ownerId);
 
-      request.onsuccess = () => resolve(request.result as ObraGuardada[]);
-      request.onerror = () => reject(request.error);
-    });
+        request.onsuccess = () =>
+          resolve(request.result as ObraGuardada[]);
+
+        request.onerror = () =>
+          reject(
+            request.error ??
+              new Error("No se pudieron cargar las obras."),
+          );
+      },
+    );
 
     return guardadas
       .sort((a, b) => b.savedAt - a.savedAt)
@@ -58,26 +76,50 @@ export async function guardarObraLocal(
   ownerId: string,
   obra: Obra,
 ): Promise<void> {
-  if (!obra.imagenBlob) return;
+  // CORRECCIÓN: guardar el Blob en una constante.
+  const imagenBlob = obra.imagenBlob;
+
+  // Evitar guardar una obra sin imagen.
+  if (!imagenBlob) {
+    return;
+  }
 
   const db = await abrirBase();
 
   try {
     await new Promise<void>((resolve, reject) => {
-      const transaction = db.transaction(STORE_NAME, "readwrite");
-      transaction.objectStore(STORE_NAME).put({
+      const transaction = db.transaction(
+        STORE_NAME,
+        "readwrite",
+      );
+
+      const obraGuardada: ObraGuardada = {
         id: obra.id,
         ownerId,
         titulo: obra.titulo,
         categoria: obra.categoria,
         notas: obra.notas,
-        imagenBlob: obra.imagenBlob,
+        imagenBlob,
         savedAt: Date.now(),
-      } satisfies ObraGuardada);
+      };
+
+      transaction
+        .objectStore(STORE_NAME)
+        .put(obraGuardada);
 
       transaction.oncomplete = () => resolve();
-      transaction.onerror = () => reject(transaction.error);
-      transaction.onabort = () => reject(transaction.error);
+
+      transaction.onerror = () =>
+        reject(
+          transaction.error ??
+            new Error("No se pudo guardar la obra."),
+        );
+
+      transaction.onabort = () =>
+        reject(
+          transaction.error ??
+            new Error("Se canceló el guardado de la obra."),
+        );
     });
   } finally {
     db.close();
