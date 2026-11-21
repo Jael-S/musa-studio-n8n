@@ -1,68 +1,65 @@
 -- ==============================================================
--- MUSA STUDIO - ESQUEMA DE BASE DE DATOS (SUPABASE / POSTGRESQL)
--- Hackathon Nodo Cero Bolivia 2026
+-- MUSA STUDIO - ESQUEMA EXACTO DE BASE DE DATOS (SUPABASE)
+-- Contrato de Integración para Hackathon Nodo Cero 2026
 -- ==============================================================
 
 -- 1. Habilitar extensión UUID
 create extension if not exists "uuid-ossp";
 
--- 2. Tabla de Perfiles de Usuarias (Artistas)
+-- 2. Tabla: perfiles
+-- Contrato: (clerk_user_id, nombre, disciplina, meta_actual, created_at)
 create table if not exists public.perfiles (
-    id uuid primary key default uuid_generate_v4(),
-    clerk_id text unique,
+    clerk_user_id text primary key,
     nombre text not null,
-    email text,
-    disciplina_principal text default 'Dibujo tradicional',
-    meta_creativa text default 'Mejorar proporciones y volumen en retratos',
-    racha_dias integer default 1,
-    avatar_url text,
+    disciplina text default 'Ilustración tradicional y digital',
+    meta_actual text default 'Dominar anatomía, proporciones y volumen',
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 3. Tabla de Obras y Bocetos
-create table if not exists public.obras (
+-- 3. Tabla: obras_progreso
+-- Contrato: (id, clerk_user_id, imagen_path, notas_usuaria, feedback_ia, created_at)
+create table if not exists public.obras_progreso (
     id uuid primary key default uuid_generate_v4(),
-    user_id uuid references public.perfiles(id) on delete cascade,
-    titulo text not null,
-    categoria text default 'Boceto',
-    descripcion_notas text,
-    imagen_url text,
-    puntaje_progreso integer default 70,
-    evaluacion_general text,
-    logros_destacados jsonb default '[]'::jsonb,
-    mejoras_tecnicas jsonb default '[]'::jsonb,
-    siguiente_reto text,
-    origen text default 'n8n_form',
+    clerk_user_id text references public.perfiles(clerk_user_id) on delete cascade not null,
+    imagen_path text not null,
+    notas_usuaria text,
+    feedback_ia jsonb default '{}'::jsonb,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 4. Tabla de Retos Creativos y Seguimiento
-create table if not exists public.retos (
+-- 4. Tabla: recordatorios
+-- Contrato: (id, clerk_user_id, proxima_fecha, frecuencia, activo)
+create table if not exists public.recordatorios (
     id uuid primary key default uuid_generate_v4(),
-    user_id uuid references public.perfiles(id) on delete cascade,
-    obra_origen_id uuid references public.obras(id) on delete set null,
-    titulo text not null,
-    descripcion text not null,
-    objetivo_tecnico text,
-    fecha_limite timestamp with time zone,
-    estado text default 'pendiente' check (estado in ('pendiente', 'completado', 'expirado')),
-    created_at timestamp with time zone default timezone('utc'::text, now()) not null
+    clerk_user_id text references public.perfiles(clerk_user_id) on delete cascade not null,
+    proxima_fecha timestamp with time zone not null,
+    frecuencia text default 'cada 3 dias', -- 'diario', 'cada 3 dias', 'semanal'
+    activo boolean default true not null
 );
 
--- 5. Índices para acelerar consultas de n8n
-create index if not exists idx_obras_user on public.obras(user_id, created_at desc);
-create index if not exists idx_retos_pendientes on public.retos(user_id, estado);
+-- 5. Índices de optimización para consultas de n8n
+create index if not exists idx_obras_progreso_user on public.obras_progreso(clerk_user_id, created_at desc);
+create index if not exists idx_recordatorios_vencidos on public.recordatorios(activo, proxima_fecha);
 
--- 6. Habilitar Row Level Security (RLS)
+-- 6. Configuración de Storage Bucket Privado 'obras'
+insert into storage.buckets (id, name, public)
+values ('obras', 'obras', false)
+on conflict (id) do nothing;
+
+-- 7. Políticas de Row Level Security (RLS)
 alter table public.perfiles enable row level security;
-alter table public.obras enable row level security;
-alter table public.retos enable row level security;
+alter table public.obras_progreso enable row level security;
+alter table public.recordatorios enable row level security;
 
--- Políticas de lectura/escritura abiertas para la API de n8n con service_role o clave anónima de prueba
-create policy "Lectura pública de perfiles" on public.perfiles for select using (true);
-create policy "Insertar perfiles vía n8n" on public.perfiles for insert with check (true);
-create policy "Lectura pública de obras" on public.obras for select using (true);
-create policy "Insertar obras vía n8n" on public.obras for insert with check (true);
-create policy "Lectura pública de retos" on public.retos for select using (true);
-create policy "Insertar retos vía n8n" on public.retos for insert with check (true);
-create policy "Actualizar retos vía n8n" on public.retos for update using (true);
+-- Políticas de acceso para n8n (Service Role) y Frontend (Anon / Authenticated)
+create policy "Lectura abierta para perfiles" on public.perfiles for select using (true);
+create policy "Inserción/Actualización perfiles" on public.perfiles for all using (true);
+
+create policy "Lectura de obras_progreso" on public.obras_progreso for select using (true);
+create policy "Inserción de obras_progreso" on public.obras_progreso for insert with check (true);
+
+create policy "Lectura y actualización de recordatorios" on public.recordatorios for all using (true);
+
+-- Permisos de Storage para subidas y lectura de URLs firmadas
+create policy "Subida a bucket obras" on storage.objects for insert with check (bucket_id = 'obras');
+create policy "Lectura de bucket obras" on storage.objects for select using (bucket_id = 'obras');

@@ -1,46 +1,40 @@
-# Cómo Importar los Workflows a n8n en 3 Minutos
+# Cómo Importar los Workflows a n8n Cloud (Para Jael)
 
-Puedes importar estos flujos a tu cuenta de **n8n Cloud** o tu instancia local en segundos:
-
----
-
-## Método 1: Copiar y Pegar en el Canvas (El más rápido ⚡)
-
-1. Abre tu espacio de trabajo en **n8n**.
-2. Haz clic en **Add workflow** (o `+`).
-3. Abre el archivo [`workflows/01_musa_mentoria_evolutiva.json`](../workflows/01_musa_mentoria_evolutiva.json) en tu editor, selecciona todo el contenido (`Ctrl + A`) y cópialo (`Ctrl + C`).
-4. Haz clic sobre el lienzo en blanco de n8n y presiona **`Ctrl + V`** (en Mac: `Cmd + V`).
-5. ¡Listo! Todo el flujo con sus nodos, notas adhesivas y conexiones aparecerá en pantalla.
-
-Repite el mismo paso para:
-* [`workflows/02_musa_recordatorios_retos.json`](../workflows/02_musa_recordatorios_retos.json)
-* [`workflows/03_musa_api_portafolio.json`](../workflows/03_musa_api_portafolio.json)
+Tus 3 workflows están listos para ser importados a **n8n Cloud** en menos de 2 minutos:
 
 ---
 
-## Método 2: Importar desde Archivo
+## Workflows a Importar
 
-1. En el editor de n8n, haz clic en el menú de **tres puntos (...)** en la esquina superior derecha.
-2. Selecciona **Import from File**.
-3. Selecciona el archivo `.json` de la carpeta `workflows/`.
-
----
-
-## Conectar tus Credenciales
-
-1. **Google Gemini (Google Cloud / AI Studio):**
-   * Abre el nodo **Modelo Google Gemini**.
-   * En el campo de credencial, selecciona **Create New Credential**.
-   * Pega tu clave de API gratuita de [Google AI Studio](https://aistudio.google.com/).
-   * Guarda la credencial.
-
-2. **Supabase (Opcional si usas los datos mockeados):**
-   * En el SQL Editor de tu proyecto en Supabase, copia y pega el script [`supabase/schema.sql`](../supabase/schema.sql) y ejecuta **Run**.
-   * Si deseas cargar datos de prueba, ejecuta [`supabase/seed_demo.sql`](../supabase/seed_demo.sql).
+| Archivo | Nombre en n8n | Propósito |
+| :--- | :--- | :--- |
+| [`workflows/01-onboarding-perfil.json`](../workflows/01-onboarding-perfil.json) | **01 Onboarding Perfil** | Recibe webhook de Clerk y crea el perfil en Supabase. |
+| [`workflows/02-analizar-obra.json`](../workflows/02-analizar-obra.json) | **02 Analizar Obra (Núcleo)** | Genera URL firmada, consulta memoria, evalúa con Gemini Vision y responde a Next.js. |
+| [`workflows/03-recordatorios-practica.json`](../workflows/03-recordatorios-practica.json) | **03 Recordatorios de Práctica** | Schedule Trigger que busca retos vencidos en Supabase y actualiza la próxima fecha. |
 
 ---
 
-## Probar la Demo Rápida
+## Paso a Paso Rápido (Método Copiar y Pegar ⚡)
 
-1. En el workflow `01_musa_mentoria_evolutiva`, haz clic en el botón de ejecución manual del nodo **Al tocar Execute (Demo rápida)** o en **Test step**.
-2. Verás cómo todo el flujo se procesa en verde y genera el reporte evolutivo de Camila en el nodo final.
+1. Abre tu espacio en **n8n Cloud**.
+2. Haz clic en **Add workflow** (`+`).
+3. Abre el archivo [`workflows/02-analizar-obra.json`](../workflows/02-analizar-obra.json), selecciona todo (`Ctrl + A`) y copia (`Ctrl + C`).
+4. Haz clic en el lienzo vacío de n8n y presiona **`Ctrl + V`**.
+5. Conecta tu credencial de **Google Gemini API** (Google AI Studio gratuita o Vertex AI) en el nodo **Modelo Google Gemini**.
+6. Haz clic en **Save** y luego en **Active / Publish**.
+
+*(Repite lo mismo para `01-onboarding-perfil.json` y `03-recordatorios-practica.json`)*.
+
+---
+
+## URLs de Webhooks para compartir con Integrante 3 (Next.js)
+
+Una vez que actives tus workflows en n8n Cloud, copia las URLs de producción y pásaselas al compañero de Next.js:
+
+* **Endpoint Analizar Obra (POST):**
+  `https://TU-N8N.app.n8n.cloud/webhook/analizar-obra`
+  * Recibe: `{ "clerk_user_id": "...", "imagen_path": "...", "notas_usuaria": "..." }`
+  * Devuelve: `{ "aciertos": [...], "consejo_tecnico": "...", "comparacion": "...", "siguiente_reto": "...", "mensaje": "..." }`
+
+* **Endpoint Onboarding Clerk (POST):**
+  `https://TU-N8N.app.n8n.cloud/webhook/clerk-onboarding`

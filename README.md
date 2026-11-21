@@ -7,7 +7,8 @@
 [![n8n Version](https://img.shields.io/badge/n8n-v1.x%20%2F%20v2.x-EA4B71?style=flat-square&logo=n8n)](https://n8n.io)
 [![Google Cloud Gemini](https://img.shields.io/badge/Google%20Cloud-Gemini%202.0%20Flash-4285F4?style=flat-square&logo=googlecloud)](https://cloud.google.com/vertex-ai)
 [![Supabase](https://img.shields.io/badge/Supabase-Database%20%26%20Storage-3ECF8E?style=flat-square&logo=supabase)](https://supabase.com)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
+[![Next.js](https://img.shields.io/badge/Next.js-App%20Router-black?style=flat-square&logo=nextdotjs)](https://nextjs.org)
+[![Clerk](https://img.shields.io/badge/Clerk-Authentication-6C47FF?style=flat-square&logo=clerk)](https://clerk.com)
 
 ---
 
@@ -15,90 +16,91 @@
 Miles de jóvenes artistas y creadoras (de 15 a 30 años) practican dibujo, pintura e ilustración en soledad. Sin una retroalimentación técnica constructiva ni un registro organizado de sus avances anteriores, pierden la noción de cuánto han progresado, experimentan frustración y terminan abandonando sus metas creativas.
 
 ## ✨ La Solución
-**Musa Studio** es un espacio privado de mentoría artística impulsado por **n8n** y **Google Gemini**. A diferencia de un asistente de chat genérico, Musa cuenta con **memoria evolutiva**:
-1. Recibe la nueva obra o boceto de la artista junto a sus reflexiones personales.
-2. Consulta en **Supabase** el historial de obras y retos previos.
-3. Evalúa la evolución técnica respecto al trabajo anterior (proporciones, sombreado, volumen).
-4. Celebra logros concretos, brinda 2 recomendaciones prácticas para su próxima sesión y le asigna su **siguiente reto creativo**.
-5. Dispara **recordatorios de constancia programados** para asegurar el hábito diario o semanal.
+**Musa Studio** es un espacio privado de mentoría artística impulsado por **n8n**, **Google Gemini** y **Supabase**. A diferencia de un asistente genérico, Musa cuenta con **memoria evolutiva**:
+1. La usuaria inicia sesión con **Clerk** y gestiona su perfil y metas artísticas.
+2. Sube sus obras o bocetos al bucket privado de **Supabase Storage** con sus notas reflexivas.
+3. El backend en **n8n** genera una URL firmada temporal, extrae el historial de las últimas 3 obras y llama a **Google Gemini Vision**.
+4. Gemini devuelve un JSON estructurado con:
+   * **Aciertos:** Aspectos técnicos positivos del avance.
+   * **Consejo Técnico:** Recomendación práctica para su próxima sesión.
+   * **Comparación:** Evaluación del progreso frente a la obra y reto anterior.
+   * **Siguiente Reto:** Meta creativa para los próximos días.
+   * **Mensaje:** Palabras de aliento de su mentora.
+5. El resultado se almacena en `obras_progreso` y se dispara un sistema de recordatorios periódicos.
 
 ---
 
-## 🏗️ Arquitectura de la Solución
+## 🏗️ Arquitectura del Sistema (División del Equipo)
 
 ```mermaid
-flowchart TD
-    subgraph Entrada["1. Entrada de la Artista"]
-        A["Formulario Interactivo n8n / Webhook"]
-        B["Notas reflexivas + Boceto actual"]
-        A --- B
+flowchart LR
+    subgraph Frontend["Integrante 3 · Next.js + Clerk"]
+        U["Usuaria"] --> C["Clerk Auth"]
+        C --> F1["Vista Subida (Storage Privado)"]
+        F1 --> F2["Panel Feedback & Historial"]
     end
 
-    subgraph Memoria["2. Memoria Evolutiva"]
-        C[("Supabase DB")]
-        D["Historial de Obras Previas & Reto Pendiente"]
-        C <--> D
+    subgraph Backend["Integrante 2 (Jael) · n8n Cloud + Gemini"]
+        W1["01 Onboarding Perfil"]
+        W2["02 Analizar Obra (Núcleo)"]
+        W3["03 Recordatorios Práctica"]
+        G["Google Gemini 2.0 Flash"]
+        W2 <--> G
     end
 
-    subgraph Cerebro["3. Razonamiento Multimodal (Google Cloud)"]
-        E["Google Gemini 2.0 Flash"]
-        F["Comparativa Evolutiva vs Semana Anterior"]
-        E --- F
+    subgraph Database["Integrante 1 · Supabase"]
+        S1[("perfiles")]
+        S2[("obras_progreso")]
+        S3[("recordatorios")]
+        SB["Bucket Privado 'obras'"]
     end
 
-    subgraph Salida["4. Feedback y Constancia"]
-        G["Página de Mentoría + Score de Progreso"]
-        H["Registro en Bitácora"]
-        I["Schedule Trigger: Recordatorio de Retos"]
-    end
-
-    Entrada -->|"Envío de avance"| Memoria
-    Memoria -->|"Contexto histórico"| Cerebro
-    Cerebro -->|"Evaluación y nuevo reto"| Salida
-    Salida -.->|"Persistencia"| C
+    C -->|"user.created"| W1 -->|"Upsert"| S1
+    F1 -->|"POST {clerk_user_id, imagen_path, notas}"| W2
+    W2 -->|"1. Generar URL firmada"| SB
+    W2 -->|"2. Consultar últimas 3 obras"| S2
+    W2 -->|"3. Guardar feedback_ia"| S2
+    W2 -->|"4. Devolver JSON"| F2
+    W3 -->|"Revisar vencidos & actualizar"| S3
 ```
 
 ---
 
-## 📦 Workflows incluidos en este Repositorio
+## 📦 Workflows de n8n (Integrante 2 - Jael)
 
-Los workflows se encuentran listos para importar en la carpeta [`workflows/`](workflows/):
+Ubicados en la carpeta [`workflows/`](workflows/):
 
-| Archivo | Nombre | Disparador | Qué hace |
-| :--- | :--- | :--- | :--- |
-| [`01_musa_mentoria_evolutiva.json`](workflows/01_musa_mentoria_evolutiva.json) | **Mentoría Creativa Evolutiva** | Formulario n8n / Manual | Flujo principal: recibe el avance, carga la obra previa de Supabase, evalúa con Gemini y entrega feedback con reto. |
-| [`02_musa_recordatorios_retos.json`](workflows/02_musa_recordatorios_retos.json) | **Recordatorios de Constancia** | Schedule (Lunes y Jueves) | Monitorea retos activos por vencer y redacta recordatorios cálidos para evitar el abandono. |
-| [`03_musa_api_portafolio.json`](workflows/03_musa_api_portafolio.json) | **API de Portafolio Evolutivo** | Webhook GET | Expone la línea de tiempo de la creadora en JSON para apps frontend o paneles de usuaria. |
-
----
-
-## 🗄️ Base de Datos (Supabase)
-
-En la carpeta [`supabase/`](supabase/) se encuentran los scripts SQL para reproducir el entorno:
-* [`supabase/schema.sql`](supabase/schema.sql): Tablas de `perfiles`, `obras` y `retos` con llaves foráneas y políticas RLS.
-* [`supabase/seed_demo.sql`](supabase/seed_demo.sql): Datos precargados de **Camila Vargas** (Semana 1 vs Semana 2) para realizar la demo en vivo.
+| Archivo | Endpoint / Trigger | Entrada / Salida |
+| :--- | :--- | :--- |
+| [`01-onboarding-perfil.json`](workflows/01-onboarding-perfil.json) | Webhook POST `/webhook/clerk-onboarding` | Recibe `user.created` de Clerk y crea el registro en la tabla `perfiles`. |
+| [`02-analizar-obra.json`](workflows/02-analizar-obra.json) | Webhook POST `/webhook/analizar-obra` | **Núcleo con IA:** Recibe `{ clerk_user_id, imagen_path, notas_usuaria }`, firma la URL en Storage, consulta las últimas 3 obras, evalúa con Gemini y responde el JSON a Next.js. |
+| [`03-recordatorios-practica.json`](workflows/03-recordatorios-practica.json) | Schedule Trigger (Cada 4 horas) | Busca recordatorios vencidos en `recordatorios`, genera un tip con Gemini y actualiza `proxima_fecha`. |
 
 ---
 
-## 🚀 Cómo Importar y Ejecutar en n8n
+## 🗄️ Esquema de Base de Datos (Integrante 1 - Supabase)
 
-Sigue la guía rápida en [`docs/GUIA_IMPORTACION_N8N.md`](docs/GUIA_IMPORTACION_N8N.md):
-1. Copia el contenido del JSON del workflow (`Ctrl + A`, `Ctrl + C`).
-2. En tu n8n, presiona **`Ctrl + V`** sobre el lienzo en blanco.
-3. Conecta tu credencial de **Google Gemini API** (Google AI Studio gratuita o Vertex AI).
-4. Haz clic en **Execute workflow** o prueba el botón **Al tocar Execute (Demo rápida)**.
-
----
-
-## 🎯 Caso de Demostración para el Jurado
-
-* **Artista:** Camila Vargas (19 años, Santa Cruz).
-* **Semana 1:** Sube su primer boceto de rostro en 3/4. Su mentora Musa le detecta asimetría en los ojos, le enseña a usar líneas guía y le propone el reto de practicar 3 pares de ojos en perspectiva.
-* **Semana 2 (Demo en Vivo):** Camila sube su nuevo avance aplicando el lápiz 4B y líneas de horizonte. Musa compara ambos trabajos, detecta la resolución del problema y le otorga un **+22% de progreso técnico**, felicitándola y activando el siguiente reto de brillos y luces.
+Ubicados en [`supabase/`](supabase/):
+* [`supabase/schema.sql`](supabase/schema.sql):
+  * `perfiles (clerk_user_id, nombre, disciplina, meta_actual, created_at)`
+  * `obras_progreso (id, clerk_user_id, imagen_path, notas_usuaria, feedback_ia, created_at)`
+  * `recordatorios (id, clerk_user_id, proxima_fecha, frecuencia, activo)`
+  * Bucket privado `obras` en Supabase Storage.
+* [`supabase/seed_demo.sql`](supabase/seed_demo.sql): Datos de prueba de **Camila Vargas** (Semana 1 y Semana 2) con feedback previo para demostrar la memoria evolutiva en vivo.
 
 ---
 
-## 👥 Equipo y Créditos
-* **Equipo:** Musa Studio Team
+## 🎤 Minutero de Presentación (15:00)
+
+* **[0:00 - 0:40] Integrante 1 (Supabase):** Explica el problema y la solución de Musa Studio.
+* **[0:40 - 1:50] Integrante 3 (Next.js):** Muestra en vivo el login con Clerk, la subida de la obra al bucket privado y la recepción del feedback con memoria en el panel.
+* **[1:50 - 2:35] Integrante 2 (Jael - n8n):** Muestra en vivo en su pantalla el canvas de n8n, la firma de la URL privada, la consulta de memoria y la llamada a Gemini Vision.
+* **[2:35 - 3:00] Integrante 1 (Supabase):** Cierra explicando la memoria histórica, los recordatorios y la postulación a la mención **Mejor uso de Google Cloud**.
+
+---
+
+## 👥 Equipo
+* **Integrante 1:** Supabase (Base de Datos y Storage Privado)
+* **Integrante 2 (Jael - @Jael-S):** n8n Cloud + Google Gemini (Backend y Automatizaciones)
+* **Integrante 3:** Next.js + Clerk (Frontend y Autenticación)
 * **Repositorio:** [github.com/Jael-S/musa-studio-n8n](https://github.com/Jael-S/musa-studio-n8n)
-* Desarrollado en la Hackathon **Nodo Cero Bolivia 2026**.

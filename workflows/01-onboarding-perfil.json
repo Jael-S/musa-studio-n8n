@@ -1,0 +1,244 @@
+{
+  "name": "Musa Studio · 01 Onboarding Perfil",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 👤 MUSA STUDIO · 01 ONBOARDING PERFIL\n**Evento Clerk `user.created` ➔ Supabase `perfiles`**\n\nEste workflow escucha el webhook de registro de **Clerk** (basado en el workflow oficial 20 de Nodo Cero) y da de alta automáticamente a la creadora en la tabla `perfiles` de Supabase.",
+        "height": 260,
+        "width": 380,
+        "color": 6
+      },
+      "id": "aeecf759-3201-414c-b3ab-583703208d94",
+      "name": "Nota: Onboarding Clerk",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -500,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "clerk-onboarding",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-clerk-01",
+      "name": "Webhook Registro Clerk",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -100,
+        -40
+      ],
+      "webhookId": "musa-clerk-onboarding-webhook"
+    },
+    {
+      "parameters": {},
+      "id": "manual-trigger-01",
+      "name": "Al tocar Execute (Demo rápida)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -100,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "type",
+              "value": "user.created"
+            },
+            {
+              "name": "id",
+              "value": "user_clerk_demo_camila"
+            },
+            {
+              "name": "first_name",
+              "value": "Camila"
+            },
+            {
+              "name": "last_name",
+              "value": "Vargas"
+            },
+            {
+              "name": "disciplina",
+              "value": "Dibujo tradicional a grafito"
+            },
+            {
+              "name": "meta_actual",
+              "value": "Dominar anatomía, proporciones y volumen"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "mock-clerk-01",
+      "name": "Datos de Prueba Clerk (Plan B)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        120,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Extrae los campos de Clerk (evento directo o datos simulados)\nconst body = $input.first().json.body || $input.first().json;\nconst data = body.data || body;\n\nconst clerkUserId = data.id || 'user_clerk_demo_camila';\nconst nombre = [data.first_name, data.last_name].filter(Boolean).join(' ') || data.nombre || 'Nueva Creadora';\nconst disciplina = data.disciplina || data.unsafe_metadata?.disciplina || 'Ilustración y dibujo';\nconst metaActual = data.meta_actual || data.unsafe_metadata?.meta_actual || 'Dominar anatomía y proporciones';\n\nreturn [{\n  json: {\n    clerk_user_id: clerkUserId,\n    nombre: nombre,\n    disciplina: disciplina,\n    meta_actual: metaActual,\n    evento: body.type || 'user.created'\n  }\n}];"
+      },
+      "id": "code-procesar-clerk-01",
+      "name": "Procesar Perfil de Usuaria",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        360,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://TU-PROYECTO.supabase.co/rest/v1/perfiles",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "TU_SERVICE_ROLE_KEY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer TU_SERVICE_ROLE_KEY"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"clerk_user_id\": \"{{ $json.clerk_user_id }}\",\n  \"nombre\": \"{{ $json.nombre }}\",\n  \"disciplina\": \"{{ $json.disciplina }}\",\n  \"meta_actual\": \"{{ $json.meta_actual }}\"\n}",
+        "options": {}
+      },
+      "id": "http-supabase-perfil-01",
+      "name": "Upsert en Supabase perfiles",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        620,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"success\",\n  \"mensaje\": \"Perfil creado exitosamente en Musa Studio\",\n  \"perfil\": {\n    \"clerk_user_id\": \"{{ $('Procesar Perfil de Usuaria').item.json.clerk_user_id }}\",\n    \"nombre\": \"{{ $('Procesar Perfil de Usuaria').item.json.nombre }}\",\n    \"disciplina\": \"{{ $('Procesar Perfil de Usuaria').item.json.disciplina }}\",\n    \"meta_actual\": \"{{ $('Procesar Perfil de Usuaria').item.json.meta_actual }}\"\n  }\n}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-clerk-01",
+      "name": "Responder 200 OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        40
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Registro Clerk": {
+      "main": [
+        [
+          {
+            "node": "Procesar Perfil de Usuaria",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Al tocar Execute (Demo rápida)": {
+      "main": [
+        [
+          {
+            "node": "Datos de Prueba Clerk (Plan B)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Datos de Prueba Clerk (Plan B)": {
+      "main": [
+        [
+          {
+            "node": "Procesar Perfil de Usuaria",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Procesar Perfil de Usuaria": {
+      "main": [
+        [
+          {
+            "node": "Upsert en Supabase perfiles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert en Supabase perfiles": {
+      "main": [
+        [
+          {
+            "node": "Responder 200 OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {
+    "Procesar Perfil de Usuaria": [
+      {
+        "json": {
+          "clerk_user_id": "user_clerk_demo_camila",
+          "nombre": "Camila Vargas",
+          "disciplina": "Dibujo tradicional a grafito",
+          "meta_actual": "Dominar anatomía, proporciones y volumen",
+          "evento": "user.created"
+        }
+      }
+    ]
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "musa-onboarding-clerk-01"
+  }
+}

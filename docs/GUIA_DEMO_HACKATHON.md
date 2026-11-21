@@ -1,54 +1,60 @@
-# Guía de Presentación y Demo (15:00) · Musa Studio
-
-Esta guía está diseñada según las pautas oficiales de **Nodo Cero**:
-* **Sin proyector:** Presentarán desde su laptop frente al jurado.
-* **Tiempo estimado:** 2 a 3 minutos en total.
-
----
-
-## 1. Preparación de Pantallas y Pestañas (Antes de las 14:45)
-
-Abran su navegador con zoom en **125% o 150%** (`Ctrl` + `+`) para que el jurado pueda leer con facilidad desde arriba o desde el fondo. Tengan preparadas las siguientes pestañas **en este orden exacto**:
-
-1. **Pestaña 1:** Portada en la web de Nodo Cero (`nodo-cero-bo.github.io`) en **Modo Presentación** con el nombre del equipo y proyecto en pantalla completa.
-2. **Pestaña 2:** Formulario de entrega de Musa Studio (`/form/musa-entrega`) en n8n.
-3. **Pestaña 3:** Canvas del Workflow `01 · Mentoría Creativa Evolutiva` en n8n (limpio y con las notas adhesivas visibles).
-4. **Pestaña 4:** Base de datos en **Supabase** mostrando la tabla `obras` (donde ya figura el boceto de la Semana 1 de Camila).
+# Guía de Presentación Oficial (15:00) · Musa Studio
+**Hackathon Nodo Cero Bolivia 2026**  
+*Modalidad: Sin proyector (presentación en laptop del equipo frente al jurado)*  
+*Tiempo Total: 3 minutos exactos*
 
 ---
 
-## 2. Guion de la Presentación (Paso a Paso)
+## 👥 Roles y Minutero del Equipo
 
-### Minuto 0:00 a 0:30 · El Problema
-> *"Buenas tardes al jurado. Hoy en Bolivia, miles de jóvenes de 15 a 30 años comienzan a dibujar o pintar con gran ilusión, pero practican en soledad. Sin una guía constructiva ni un registro organizado de su evolución, sienten que no mejoran y terminan abandonando su pasión artística."*
-
-### Minuto 0:30 a 1:00 · La Solución
-> *"Para resolver esto creamos **Musa Studio**: una plataforma de mentoría creativa con inteligencia artificial y **memoria evolutiva** orquestada con **n8n**. A diferencia de un chat genérico, Musa recuerda los trabajos anteriores de la creadora, evalúa su progreso técnico en el tiempo, celebra sus victorias y le asigna retos periódicos para mantener su constancia."*
-
-### Minuto 1:00 a 2:15 · La Demo en Vivo
-1. **Mostrar la Entrada (Pestaña 2):**
-   * *"Aquí tenemos a Camila, una joven artista de 19 años. La semana pasada subió un boceto con problemas de asimetría en los ojos y sombreado plano (Semana 1). Hoy sube su nuevo avance de Semana 2 aplicando líneas guía y lápiz 4B."*
-   * Tocan el botón de enviar o ejecutan en n8n.
-2. **Mostrar el Flujo en n8n (Pestaña 3):**
-   * *"En el canvas de n8n vemos cómo fluyen los datos:*
-     * *1. Se capturan las notas reflexivas y la obra.*
-     * *2. Se conecta con **Supabase** para extraer el contexto de su última entrega.*
-     * *3. **Google Gemini** realiza una comparativa evolutiva evaluando mejoras de técnica y proporción.*
-     * *4. Se calcula la ganancia de progreso y se almacena el nuevo reto."*
-3. **Mostrar el Resultado (Pestaña 4 / Página Final):**
-   * *"¡Y aquí está el feedback de Musa! Destaca un salto del **+22%** en precisión anatómica, felicita a Camila por alinear los ojos en perspectiva 3/4, le sugiere cómo suavizar sombras y le activa su reto de la semana."*
-
-### Minuto 2:15 a 2:45 · Qué Sigue y Mención
-> *"El sistema también cuenta con un workflow de **constancia** que monitorea retos pendientes y envía recordatorios amigables para evitar el bloqueo creativo.*
-> *Postulamos a la mención **Mejor uso de Google Cloud** gracias a la integración de **Google Gemini** para análisis multimodal y evaluación técnica.*
-> *El siguiente paso es integrar login con Clerk y galerías comunitarias. ¡Muchas gracias!"*
+```
+[0:00 - 0:40]  ──>  Integrante 1 (Supabase): Problema y Solución
+[0:40 - 1:50]  ──>  Integrante 3 (Next.js): Demo Frontend (Login + Subida + Feedback)
+[1:50 - 2:35]  ──>  Integrante 2 (Jael - n8n): Demo Backend (Canvas n8n + Gemini Vision + Memoria)
+[2:35 - 3:00]  ──>  Integrante 1 (Supabase): Cierre, Recordatorios e Impacto
+```
 
 ---
 
-## 3. Plan B por si Falla el Wi-Fi o una Conexión
+## 🎤 Guion Minuto a Minuto
 
-Si la red local del Centro de Educación Ambiental se satura durante la presentación:
-1. **No se disculpen.** Pasen inmediatamente al Plan B con naturalidad:
-   > *"Les mostramos la ejecución completa que procesamos hace unos minutos."*
-2. Abran la pestaña **Executions** en n8n: allí verán la ejecución exitosa en verde, mostrando exactamente qué entró y qué salió de cada nodo.
-3. El workflow incluye **Pin Data** en el nodo final (`Estructurar Reporte Evolutivo`), por lo que los datos del reporte de Camila están guardados en el lienzo y se pueden visualizar en cualquier momento.
+### 1. [0:00 – 0:40] Integrante 1 · El Problema y la Solución
+> *"Buenas tardes al jurado. Hoy en Bolivia, miles de jóvenes artistas y creadoras de 15 a 30 años practican dibujo o pintura en soledad. Sin feedback constante ni registro de sus avances, sienten que no mejoran y abandonan sus metas creativas.*
+> *Para resolver esto creamos **Musa Studio**: una plataforma privada de mentoría artística con **memoria evolutiva**. A diferencia de un chat genérico, Musa recuerda los trabajos anteriores de la creadora, evalúa su progreso técnico en el tiempo, celebra sus victorias y le asigna retos para mantener su constancia."*
+
+---
+
+### 2. [0:40 – 1:50] Integrante 3 · Demo de Usuaria en Next.js
+*(Muestra su pantalla con la app web Next.js)*
+> *"Aquí vemos la experiencia de **Camila**, una joven artista:*
+> *1. Inicia sesión de forma segura con **Clerk**.*
+> *2. En su perfil vemos su disciplina ('Dibujo a grafito') y su meta ('Dominar simetría y volumen en rostros').*
+> *3. Camila sube su nuevo avance al bucket privado de **Supabase Storage** con sus notas personales: 'Apliqué líneas guía para los ojos y cambié al lápiz 4B para el pómulo'.*
+> *4. Al tocar 'Recibir Mentoría', la app dispara el backend en **n8n**... y en segundos recibe su panel con aciertos, consejo técnico, comparativa con la semana 1 y su nuevo reto."*
+
+---
+
+### 3. [1:50 – 2:35] Integrante 2 (Jael) · Demo Backend en n8n Cloud + Gemini
+*(Muestras tu pantalla con el canvas de n8n con zoom 125% y nodos claros)*
+> *"Detrás de escena, este es el motor en **n8n**:*
+> *1. **Workflow 1 (Onboarding):** Cuando Camila se registró en Clerk, n8n recibió el webhook y creó su fila en la tabla `perfiles` de Supabase.*
+> *2. **Workflow 2 (Analizar Obra - Núcleo):** Al recibir la petición de Next.js, n8n genera una **URL firmada temporal** en Supabase Storage para leer la imagen privada de forma segura.*
+> *3. Consulta en Supabase las **últimas obras** de Camila para armar su **memoria evolutiva**.*
+> *4. Enviamos a **Google Gemini 2.0 Flash** la imagen, las notas y el historial previo. Gemini razona sobre el trazo y devuelve un JSON estricto con aciertos, consejo técnico y comparativa.*
+> *5. n8n guarda el análisis en `obras_progreso` y devuelve el JSON a Next.js en tiempo real."*
+
+---
+
+### 4. [2:35 – 3:00] Integrante 1 · Cierre, Recordatorios y Mención Especial
+*(Vuelven a la portada o muestran el Workflow 3)*
+> *"Para evitar el abandono, el **Workflow 3** revisa periódicamente los retos vencidos en Supabase y envía **recordatorios de constancia** para invitar a la artista a dibujar 15 minutos hoy sin frustración.*
+> *Postulamos a la mención **Mejor uso de Google Cloud** por la integración multimodal y razonamiento de **Google Gemini**.*
+> *¡Musa Studio transforma la práctica solitaria en un camino de crecimiento constante! Muchas gracias."*
+
+---
+
+## 🛡️ Plan B de Jael (Si falla el Wi-Fi)
+1. En tu n8n, ten abierta la pestaña **Executions** con la ejecución previa en verde.
+2. Si la red se corta, dices con seguridad:
+   > *"Les muestro en vivo la ejecución que procesamos en n8n hace unos minutos con la entrada, la llamada a Gemini y la salida en Supabase."*
+3. Muestras los datos fijados (**Pin Data**) en el nodo final `Devolver JSON a Next.js`.

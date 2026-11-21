@@ -1,69 +1,78 @@
 -- ==============================================================
--- MUSA STUDIO - DATOS DE PRUEBA PARA DEMO EN VIVO
--- Inserta un perfil de creadora y su obra anterior (Semana 1)
--- para que Gemini compare en vivo contra su avance de Semana 2
+-- MUSA STUDIO - SEED DATA PARA DEMO EN VIVO
+-- Crea a Camila Vargas con 2 obras previas para demostrar
+-- la memoria evolutiva (Semana 1 y Semana 2) ante el jurado
 -- ==============================================================
 
--- 1. Insertar perfil de creadora joven
-insert into public.perfiles (id, clerk_id, nombre, email, disciplina_principal, meta_creativa, racha_dias)
+-- 1. Insertar perfil de Camila
+insert into public.perfiles (clerk_user_id, nombre, disciplina, meta_actual)
 values (
-    'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
     'user_clerk_demo_camila',
     'Camila Vargas',
-    'camila.vargas.arte@example.com',
-    'Ilustración digital & Bocetos a lápiz',
-    'Dominar sombreado y perspectiva en rostros y manos',
-    5
-) on conflict (id) do nothing;
+    'Dibujo tradicional a grafito',
+    'Corregir simetría en rostros de 3/4 y lograr volumen realista'
+) on conflict (clerk_user_id) do update set
+    nombre = excluded.nombre,
+    disciplina = excluded.disciplina,
+    meta_actual = excluded.meta_actual;
 
--- 2. Insertar su obra de la semana pasada (Semana 1 - El punto de partida evolutivo)
-insert into public.obras (
+-- 2. Insertar Obra 1 (Hace 14 días - El inicio del viaje)
+insert into public.obras_progreso (
     id,
-    user_id,
-    titulo,
-    categoria,
-    descripcion_notas,
-    imagen_url,
-    puntaje_progreso,
-    evaluacion_general,
-    logros_destacados,
-    mejoras_tecnicas,
-    siguiente_reto,
+    clerk_user_id,
+    imagen_path,
+    notas_usuaria,
+    feedback_ia,
     created_at
 ) values (
-    'b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
-    'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-    'Boceto inicial de rostro (Semana 1)',
-    'Retrato a grafito',
-    'Primer intento de retrato en 3/4. Siento que los ojos quedaron desiguales y el sombreado en la mejilla se ve muy plano.',
-    'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=600&auto=format&fit=crop&q=80',
-    62,
-    'Buen dinamismo inicial y expresividad en la mirada. Las proporciones generales están bien planteadas para ser un boceto rápido.',
-    '["Buena intención en la línea del mentón", "Captura inicial de la dirección de la mirada"]'::jsonb,
-    '["Construir primero el eje de simetría antes de ubicar el segundo ojo", "Graduar el grafito (usar 2B o 4B) para dar profundidad a los pómulos sin ensuciar el papel"]'::jsonb,
-    'Reto Semana 1: Dibuja 3 pares de ojos en perspectiva de 3/4 usando una línea guía de horizonte.',
+    '11111111-1111-1111-1111-111111111111',
+    'user_clerk_demo_camila',
+    'user_clerk_demo_camila/semana_1_boceto_inicial.jpg',
+    'Primer intento de rostro en 3/4. Siento que el ojo derecho me quedó caído y el sombreado en la mejilla se ve sucio.',
+    '{
+        "aciertos": ["Buena intención en la curva de la mandíbula", "Trazo suelto en el cabello"],
+        "consejo_tecnico": "Traza un eje horizontal de guía antes de dibujar el segundo ojo y gradúa la presión del lápiz.",
+        "comparacion": null,
+        "siguiente_reto": "Dibuja 3 pares de ojos alineados con una línea de horizonte.",
+        "mensaje": "¡Bienvenida a Musa, Camila! Todo gran artista empezó con un primer boceto."
+    }'::jsonb,
+    now() - interval '14 days'
+) on conflict (id) do nothing;
+
+-- 3. Insertar Obra 2 (Hace 7 días - Progreso intermedio)
+insert into public.obras_progreso (
+    id,
+    clerk_user_id,
+    imagen_path,
+    notas_usuaria,
+    feedback_ia,
+    created_at
+) values (
+    '22222222-2222-2222-2222-222222222222',
+    'user_clerk_demo_camila',
+    'user_clerk_demo_camila/semana_2_estudio_ojos.jpg',
+    'Apliqué el reto de la línea de horizonte. Los ojos quedaron mucho más parejos, pero el pómulo sigue viéndose plano.',
+    '{
+        "aciertos": ["Excelente nivelación de las pupilas y lagrimales", "Proporciones faciales más armónicas"],
+        "consejo_tecnico": "Usa un lápiz 4B para la sombra más profunda debajo del pómulo y deja que la luz respire en el centro.",
+        "comparacion": "Respecto a tu primer boceto, la simetría ocular mejoró radicalmente. El rostro ya tiene dirección de mirada creíble.",
+        "siguiente_reto": "Aplica sombra en capas (2B base, 4B sombra profunda) en el pómulo izquierdo.",
+        "mensaje": "¡Se nota el trabajo de esta semana! Estás construyendo memoria muscular."
+    }'::jsonb,
     now() - interval '7 days'
 ) on conflict (id) do nothing;
 
--- 3. Insertar el reto que tenía activo
-insert into public.retos (
+-- 4. Insertar recordatorio de práctica activo
+insert into public.recordatorios (
     id,
-    user_id,
-    obra_origen_id,
-    titulo,
-    descripcion,
-    objetivo_tecnico,
-    fecha_limite,
-    estado,
-    created_at
+    clerk_user_id,
+    proxima_fecha,
+    frecuencia,
+    activo
 ) values (
-    'c2eebc99-9c0b-4ef8-bb6d-6bb9bd380a33',
-    'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-    'b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
-    'Reto de Perspectiva Facial: Ojos en 3/4',
-    'Dibuja un nuevo rostro aplicando una línea guía horizontal para alinear pupilas y lagrimales en perspectiva.',
-    'Corregir simetría y gradiente de sombra en pómulo',
-    now() + interval '2 days',
-    'pendiente',
-    now() - interval '7 days'
+    '33333333-3333-3333-3333-333333333333',
+    'user_clerk_demo_camila',
+    now() - interval '1 hour', -- Vencido para probar el Workflow 3 en vivo
+    'cada 3 dias',
+    true
 ) on conflict (id) do nothing;
