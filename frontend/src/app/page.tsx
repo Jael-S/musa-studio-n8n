@@ -1,7 +1,8 @@
 
 import { Suspense } from "react";
 import { Show, SignInButton, SignUpButton } from "@clerk/nextjs";
-import Dashboard from "@/components/Dashboard";
+import Dashboard from "../components/Dashboard";
+import Logo from "@/components/Logo";
 
 export default function Home() {
   return (
@@ -12,9 +13,7 @@ export default function Home() {
 
       <Show when="signed-out">
         <main className="flex min-h-screen flex-col items-center justify-center bg-rose-50 px-6 text-center">
-          <h1 className="text-5xl font-bold text-rose-700">
-            Musa Studio
-          </h1>
+          <Logo className="scale-125" />
 
           <p className="mt-6 max-w-xl text-lg text-slate-600">
             Tu espacio para crear, registrar tus avances y

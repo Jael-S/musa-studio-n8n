@@ -5,6 +5,7 @@ type ObraGuardada = Omit<Obra, "imagen" | "imagenBlob"> & {
   ownerId: string;
   imagenBlob: Blob;
   savedAt: number;
+  fechaCreacion?: number;
 };
 
 const DB_NAME = "musa-studio-local";
@@ -62,10 +63,11 @@ export async function cargarObrasLocales(
 
     return guardadas
       .sort((a, b) => b.savedAt - a.savedAt)
-      .map(({ imagenBlob, savedAt: _savedAt, ...obra }) => ({
+      .map(({ imagenBlob, savedAt, fechaCreacion, ...obra }) => ({
         ...obra,
         imagen: URL.createObjectURL(imagenBlob),
         imagenBlob,
+        fechaCreacion: fechaCreacion ?? savedAt,
       }));
   } finally {
     db.close();
@@ -100,7 +102,9 @@ export async function guardarObraLocal(
         categoria: obra.categoria,
         notas: obra.notas,
         imagenBlob,
+        imagenPath: obra.imagenPath,
         savedAt: Date.now(),
+        fechaCreacion: obra.fechaCreacion ?? Date.now(),
       };
 
       transaction

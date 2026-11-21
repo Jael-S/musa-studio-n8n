@@ -10,6 +10,8 @@ export type Obra = {
   notas: string;
   imagen: string;
   imagenBlob?: Blob;
+  fechaCreacion?: number;
+  imagenPath?: string;
 };
 
 type ResultadoMentoria = {
@@ -93,6 +95,17 @@ export default function SubirObra({
     let demo = false;
 
     try {
+      const subida = await fetch("/api/obras", {
+        method: "POST",
+        body: datos,
+      });
+      const datosSubida = await subida.json();
+      if (!subida.ok) {
+        throw new Error(datosSubida.error || "No se pudo guardar la imagen en Supabase.");
+      }
+
+      datos.append("imagen_path", datosSubida.path);
+
       const respuesta = await fetch("/api/mentoria", {
         method: "POST",
         body: datos,
@@ -123,6 +136,8 @@ export default function SubirObra({
         notas: notas.trim(),
         imagen: URL.createObjectURL(archivo),
         imagenBlob: archivo,
+        fechaCreacion: Date.now(),
+        imagenPath: datosSubida.path,
       };
 
       onAgregar(obra);
@@ -249,10 +264,7 @@ export default function SubirObra({
         </button>
 
         <p className="mt-3 text-xs text-slate-500">
-          Tus obras se guardan en este navegador.
-          La mentoría utiliza n8n y Gemini cuando están
-          conectados. La sincronización permanente
-          con Supabase está pendiente.
+          La imagen se guarda en Supabase Storage. Las fichas del portafolio se conservan en este navegador; la mentoría con IA requiere n8n activo.
         </p>
       </form>
 

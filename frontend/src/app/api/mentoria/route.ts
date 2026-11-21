@@ -27,6 +27,7 @@ export async function POST(request: NextRequest) {
     const categoria = form.get("categoria");
     const notas = form.get("notas");
     const imagen = form.get("imagen");
+    const imagenPath = form.get("imagen_path");
 
     if (
       typeof titulo !== "string" ||
@@ -56,9 +57,13 @@ export async function POST(request: NextRequest) {
     }
 
     const datos = new FormData();
+    datos.append("clerk_user_id", userId);
     datos.append("titulo_obra", titulo.trim());
     datos.append("categoria", categoria);
     datos.append("notas_creadora", notas.trim());
+    if (typeof imagenPath === "string" && imagenPath) {
+      datos.append("imagen_path", imagenPath);
+    }
     datos.append("foto", imagen, imagen.name);
 
     const respuesta = await fetch(webhook, {
