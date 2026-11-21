@@ -9,11 +9,15 @@ export type Obra = {
   categoria: string;
   notas: string;
   imagen: string;
+  imagenBlob?: Blob;
 };
 
 type ResultadoMentoria = {
   evaluacion_general?: string;
   puntaje_progreso?: number;
+  aciertos?: string[];
+  consejo_tecnico?: string;
+  comparacion?: string | null;
   logros_destacados?: string[];
   mejoras_tecnicas?: string[];
   siguiente_reto?: string;
@@ -41,6 +45,7 @@ export default function SubirObra({
 
   async function enviar(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const form = e.currentTarget;
 
     if (cargando) return;
 
@@ -115,6 +120,7 @@ export default function SubirObra({
         categoria,
         notas: notas.trim(),
         imagen: URL.createObjectURL(archivo),
+        imagenBlob: archivo,
       };
 
       onAgregar(obra);
@@ -126,7 +132,7 @@ export default function SubirObra({
       setNotas("");
       setArchivo(null);
 
-      e.currentTarget.reset();
+      form.reset();
     } catch (err) {
       setError(
         err instanceof Error
@@ -240,8 +246,9 @@ export default function SubirObra({
         </button>
 
         <p className="mt-3 text-xs text-slate-500">
-          Las imágenes todavía no se guardan permanentemente
-          en Supabase. La mentoría requiere conectar n8n.
+          Tus obras se guardan en este navegador. Para
+          sincronizarlas entre dispositivos y recibir mentoría
+          con IA, falta conectar Supabase y n8n.
         </p>
       </form>
 
@@ -291,18 +298,40 @@ export default function SubirObra({
             </div>
           )}
 
-          {resultado.logros_destacados?.length ? (
+          {(resultado.aciertos ?? resultado.logros_destacados)?.length ? (
             <div className="mt-5">
               <h3 className="font-semibold text-green-700">
                 Logros destacados
               </h3>
               <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-600">
-                {resultado.logros_destacados.map((logro, i) => (
+                {(resultado.aciertos ?? resultado.logros_destacados ?? []).map((logro, i) => (
                   <li key={i}>{logro}</li>
                 ))}
               </ul>
             </div>
           ) : null}
+
+          {resultado.consejo_tecnico && (
+            <div className="mt-5">
+              <h3 className="font-semibold text-amber-700">
+                Consejo técnico
+              </h3>
+              <p className="mt-2 text-slate-600">
+                {resultado.consejo_tecnico}
+              </p>
+            </div>
+          )}
+
+          {resultado.comparacion && (
+            <div className="mt-5">
+              <h3 className="font-semibold text-purple-700">
+                Comparación con tu avance anterior
+              </h3>
+              <p className="mt-2 text-slate-600">
+                {resultado.comparacion}
+              </p>
+            </div>
+          )}
 
           {resultado.mejoras_tecnicas?.length ? (
             <div className="mt-5">
@@ -337,9 +366,9 @@ export default function SubirObra({
             </div>
           )}
 
-          {resultado.mensaje_aliento && (
+          {(resultado.mensaje ?? resultado.mensaje_aliento) && (
             <p className="mt-5 italic text-purple-700">
-              {resultado.mensaje_aliento}
+              {resultado.mensaje ?? resultado.mensaje_aliento}
             </p>
           )}
         </section>

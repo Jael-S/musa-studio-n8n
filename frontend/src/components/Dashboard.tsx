@@ -1,19 +1,58 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useUser, UserButton } from "@clerk/nextjs";
 import SubirObra, { type Obra } from "./SubirObra";
+import { cargarObrasLocales, guardarObraLocal } from "@/lib/obras-locales";
 
 export default function Dashboard() {
   const { user } = useUser();
   const [obras, setObras] = useState<Obra[]>([]);
+  const obrasRef = useRef<Obra[]>([]);
 
   useEffect(() => {
-    return () => {
-      obras.forEach((obra) => URL.revokeObjectURL(obra.imagen));
-    };
+    obrasRef.current = obras;
   }, [obras]);
+
+  useEffect(() => {
+    const ownerId = user?.id;
+    if (!ownerId) {
+      setObras([]);
+      return;
+    }
+
+    let cancelado = false;
+    cargarObrasLocales(ownerId)
+      .then((guardadas) => {
+        if (!cancelado) setObras(guardadas);
+        else guardadas.forEach((obra) => URL.revokeObjectURL(obra.imagen));
+      })
+      .catch((error) => console.error("No se pudieron cargar las obras locales:", error));
+
+    return () => {
+      cancelado = true;
+    };
+  }, [user?.id]);
+
+  useEffect(
+    () => () => {
+      obrasRef.current.forEach((obra) => URL.revokeObjectURL(obra.imagen));
+    },
+    [],
+  );
+
+  async function agregarObra(obra: Obra) {
+    if (user?.id) {
+      try {
+        await guardarObraLocal(user.id, obra);
+      } catch (error) {
+        console.error("No se pudo guardar la obra en este navegador:", error);
+      }
+    }
+
+    setObras((actuales) => [obra, ...actuales]);
+  }
 
   return (
     <main className="min-h-screen bg-rose-50 text-slate-900">
@@ -57,9 +96,7 @@ export default function Dashboard() {
 
         <div className="grid gap-8 lg:grid-cols-2">
           <SubirObra
-            onAgregar={(obra) => {
-              setObras((actuales) => [obra, ...actuales]);
-            }}
+            onAgregar={agregarObra}
           />
 
           <section className="rounded-3xl border border-rose-100 bg-white p-6 shadow-sm">
