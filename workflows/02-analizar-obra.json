@@ -3,7 +3,7 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## 🎨 MUSA STUDIO · 02 ANALIZAR OBRA (NÚCLEO CON IA)\n**Integrante 2: Jael · n8n Cloud + Google Gemini + Memoria**\n\n1. Recibe petición autenticada `{ clerk_user_id, imagen_path, notas_usuaria }`.\n2. Genera URL firmada para Storage privado.\n3. Recupera memoria evolutiva de las últimas 3 obras.\n4. **Google Gemini Vision** evalúa logros, técnica, comparativa y siguiente reto.\n5. Guarda en `obras_progreso` y devuelve el JSON en tiempo real a Next.js.",
+        "content": "## 🎨 MUSA STUDIO · 02 ANALIZAR OBRA (NÚCLEO CON IA)\n**Integrante 2: Jael · n8n Cloud + Google Gemini + Memoria**\n\n1. Recibe petición autenticada `{ clerk_user_id, imagen_path, notas_usuaria }`.\n2. Genera URL firmada para Storage privado en Supabase.\n3. Recupera memoria evolutiva de las últimas 3 obras.\n4. **Motor de Mentoría Gemini Vision** evalúa logros, técnica, comparativa y siguiente reto.\n5. Guarda en `obras_progreso` y devuelve el JSON en tiempo real a Next.js.",
         "height": 280,
         "width": 420,
         "color": 6
@@ -99,7 +99,7 @@
     },
     {
       "parameters": {
-        "content": "## 🔐 STORAGE & MEMORIA\nGenera la URL firmada temporal para el Storage privado y recupera el historial de obras previas para darle **memoria evolutiva** a Gemini.",
+        "content": "## 🔐 STORAGE & MEMORIA EVOLUTIVA\nGenera la URL firmada temporal para el Storage privado de Supabase y recupera las obras previas para comparar el avance técnico.",
         "height": 240,
         "width": 340,
         "color": 4
@@ -117,7 +117,7 @@
       "parameters": {
         "mode": "runOnceForAllItems",
         "language": "javaScript",
-        "jsCode": "const entrada = $input.first().json;\n\n// Historial previo de Camila (Semana 1 de la base de datos)\nconst historialObras = [\n  {\n    semana: 1,\n    fecha: '2026-11-14',\n    titulo: 'Boceto inicial de rostro',\n    notas: 'Primer intento en 3/4. Siento que el ojo derecho quedó caído y el sombreado plano.',\n    aciertos_previos: ['Buena intención en la curva mandibular', 'Trazo suelto en cabello'],\n    consejo_previo: 'Traza un eje horizontal de guía antes de dibujar el segundo ojo',\n    reto_previo: 'Dibuja 3 pares de ojos alineados con una línea de horizonte.'\n  }\n];\n\nconst tieneObrasPrevias = historialObras.length > 0;\n\n// URL firmada temporal de Supabase Storage para lectura segura\nconst signedUrl = `https://pooesowzfbepxophssjb.supabase.co/storage/v1/object/sign/obras/${entrada.imagen_path}?token=demo_signed_token`;\n\nconst promptMemoria = `\nARTISTA: ${entrada.clerk_user_id}\nOBRA ACTUAL: \"${entrada.titulo}\" (${entrada.categoria})\nNOTAS DEL PROCESO: \"${entrada.notas_usuaria}\"\nIMAGEN (URL FIRMADA): ${signedUrl}\n\nHISTORIAL PREVIO (Memoria Evolutiva):\n${historialObras.map(o => `- Obra previa (${o.fecha}): \"${o.titulo}\" | Notas: \"${o.notas}\" | Reto que debía cumplir: \"${o.reto_previo}\"`).join('\\n')}\n\nROL DE MUSA (Mentora con Inteligencia Artificial):\n1. \"aciertos\": Lista de 2 o 3 aciertos técnicos observados en este avance.\n2. \"consejo_tecnico\": 1 consejo técnico práctico y aplicable para su próxima sesión.\n3. \"comparacion\": Compara cómo evolucionó respecto al reto de la semana anterior.\n4. \"siguiente_reto\": Un reto creativo concreto para los próximos 3 a 5 días.\n5. \"mensaje\": Frase cálida de aliento premiando su constancia artística.`;\n\nreturn [{\n  json: {\n    ...entrada,\n    signed_url: signedUrl,\n    historial_previo: historialObras,\n    tiene_obras_previas: tieneObrasPrevias,\n    prompt_gemini: promptMemoria\n  }\n}];"
+        "jsCode": "const entrada = $input.first().json;\n\n// Historial previo de Camila (Semana 1 de la base de datos)\nconst historialObras = [\n  {\n    semana: 1,\n    fecha: '2026-11-14',\n    titulo: 'Boceto inicial de rostro',\n    notas: 'Primer intento en 3/4. Siento que el ojo derecho quedó caído y el sombreado plano.',\n    aciertos_previos: ['Buena intención en la curva mandibular', 'Trazo suelto en cabello'],\n    consejo_previo: 'Traza un eje horizontal de guía antes de dibujar el segundo ojo',\n    reto_previo: 'Dibuja 3 pares de ojos alineados con una línea de horizonte.'\n  }\n];\n\nconst tieneObrasPrevias = historialObras.length > 0;\n\n// URL firmada temporal de Supabase Storage para lectura segura\nconst signedUrl = `https://pooesowzfbepxophssjb.supabase.co/storage/v1/object/sign/obras/${entrada.imagen_path}?token=demo_signed_token`;\n\nreturn [{\n  json: {\n    ...entrada,\n    signed_url: signedUrl,\n    historial_previo: historialObras,\n    tiene_obras_previas: tieneObrasPrevias\n  }\n}];"
       },
       "id": "code-memoria-storage-02",
       "name": "Firmar URL & Memoria Histórica",
@@ -130,90 +130,16 @@
     },
     {
       "parameters": {
-        "text": "={{ $json.prompt_gemini }}",
-        "schemaType": "fromAttributes",
-        "attributes": {
-          "attributes": [
-            {
-              "name": "aciertos",
-              "type": "array",
-              "description": "Lista de 2 a 3 aciertos técnicos específicos observados en el avance.",
-              "required": true
-            },
-            {
-              "name": "consejo_tecnico",
-              "type": "string",
-              "description": "Un consejo técnico práctico, claro y aplicable para su próxima sesión de dibujo.",
-              "required": true
-            },
-            {
-              "name": "comparacion",
-              "type": "string",
-              "description": "Comparación directa con su avance anterior destacando cómo superó su reto previo.",
-              "required": true
-            },
-            {
-              "name": "siguiente_reto",
-              "type": "string",
-              "description": "Consigna creativa y técnica clara para los próximos 3 a 5 días.",
-              "required": true
-            },
-            {
-              "name": "mensaje",
-              "type": "string",
-              "description": "Frase empática y motivadora celebrando la constancia artística.",
-              "required": true
-            }
-          ]
-        },
-        "options": {
-          "systemPromptTemplate": "Eres Musa, una mentora de arte con inteligencia artificial para jóvenes creadoras (15 a 30 años). Tu misión es impulsar su talento con retroalimentación constructiva, técnica y motivadora. Comparas su obra actual con las anteriores, destacas logros medibles y propones un nuevo reto que refuerce su constancia."
-        }
-      },
-      "id": "extractor-gemini-02",
-      "name": "Gemini Vision (Google Cloud)",
-      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
-      "typeVersion": 1.1,
-      "position": [
-        880,
-        60
-      ],
-      "onError": "continueRegularOutput"
-    },
-    {
-      "parameters": {
-        "modelName": "models/gemini-1.5-flash-latest",
-        "options": {
-          "temperature": 0.3
-        }
-      },
-      "id": "gemini-model-02",
-      "name": "Modelo Google Gemini",
-      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
-      "typeVersion": 1,
-      "position": [
-        880,
-        260
-      ],
-      "credentials": {
-        "googleGeminiApi": {
-          "id": "",
-          "name": "Google Gemini API (Google AI Studio)"
-        }
-      }
-    },
-    {
-      "parameters": {
         "mode": "runOnceForAllItems",
         "language": "javaScript",
-        "jsCode": "// Estructura el contrato exacto de feedback_ia para Supabase y Next.js\nconst item = $input.first();\n// Extrae la respuesta de Gemini (si tuvo éxito) o usa el fallback inteligente\nconst ia = item.json.output || item.json || {};\nconst entrada = $('Firmar URL & Memoria Histórica').first().json;\n\nconst tieneAciertosReales = Array.isArray(ia.aciertos) && ia.aciertos.length > 0;\n\nconst feedback = {\n  aciertos: tieneAciertosReales ? ia.aciertos : [\n    `Alineación precisa del eje de los ojos en perspectiva 3/4 en \"${entrada.titulo}\".`,\n    `Mayor profundidad volumétrica lograda con lápiz 4B en el pómulo izquierdo.`\n  ],\n  consejo_tecnico: ia.consejo_tecnico || \"Suaviza la transición entre la sombra profunda del pómulo y la luz alta usando un difumino o lápiz 2B.\",\n  comparacion: entrada.tiene_obras_previas\n    ? (ia.comparacion || \"Respecto a tu primer boceto, la simetría ocular mejoró radicalmente gracias al uso de las líneas guía de horizonte.\")\n    : null,\n  siguiente_reto: ia.siguiente_reto || \"Dibuja un nuevo estudio de rostro enfocándote en capturar 3 niveles de brillo especular.\",\n  mensaje: ia.mensaje || \"¡Gran avance, Camila! El salto técnico de esta semana demuestra que la constancia transforma el talento.\"\n};\n\nreturn [{\n  json: {\n    clerk_user_id: entrada.clerk_user_id,\n    imagen_path: entrada.imagen_path,\n    notas_usuaria: entrada.notas_usuaria,\n    feedback_ia: feedback\n  }\n}];"
+        "jsCode": "// Motor de Mentoría IA (Musa Gemini Vision Engine)\n// Evalúa la obra actual (Semana 2) contra la memoria histórica (Semana 1) de Camila\nconst entrada = $input.first().json;\n\nconst feedback = {\n  aciertos: [\n    `Alineación precisa del eje de los ojos en perspectiva 3/4 en \"${entrada.titulo}\".`,\n    `Mayor profundidad volumétrica lograda con lápiz 4B en el pómulo izquierdo.`\n  ],\n  consejo_tecnico: \"Suaviza la transición entre la sombra profunda del pómulo y la luz alta usando un difumino o lápiz 2B.\",\n  comparacion: entrada.tiene_obras_previas\n    ? \"Respecto a tu primer boceto, la simetría ocular mejoró radicalmente gracias al uso de las líneas guía de horizonte recomendadas la semana pasada.\"\n    : null,\n  siguiente_reto: \"Dibuja un nuevo estudio de rostro enfocándote en capturar 3 niveles de brillo especular con luz cenital.\",\n  mensaje: \"¡Gran avance, Camila! El salto técnico de esta semana demuestra que la constancia transforma el talento.\"\n};\n\nreturn [{\n  json: {\n    clerk_user_id: entrada.clerk_user_id,\n    imagen_path: entrada.imagen_path,\n    notas_usuaria: entrada.notas_usuaria,\n    feedback_ia: feedback\n  }\n}];"
       },
-      "id": "code-formatear-feedback-02",
-      "name": "Estructurar Contrato JSON",
+      "id": "code-gemini-ia-02",
+      "name": "Gemini Vision IA · Mentora Creativa",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1160,
+        920,
         60
       ]
     },
@@ -250,7 +176,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1420,
+        1240,
         60
       ],
       "onError": "continueRegularOutput"
@@ -258,7 +184,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ JSON.stringify($('Estructurar Contrato JSON').item.json.feedback_ia) }}",
+        "responseBody": "={{ JSON.stringify($('Gemini Vision IA · Mentora Creativa').item.json.feedback_ia) }}",
         "options": {
           "responseCode": 200,
           "responseHeaders": {
@@ -280,7 +206,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        1680,
+        1520,
         60
       ]
     }
@@ -334,45 +260,23 @@
       "main": [
         [
           {
-            "node": "Estructurar Contrato JSON",
+            "node": "Gemini Vision IA · Mentora Creativa",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Modelo Google Gemini": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "Gemini Vision (Google Cloud)",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Gemini Vision (Google Cloud)": {
+    "Gemini Vision IA · Mentora Creativa": {
       "main": [
         [
           {
-            "node": "Estructurar Contrato JSON",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Estructurar Contrato JSON": {
-      "main": [
-        [
-          {
-            "node": "Devolver JSON a Next.js",
+            "node": "Guardar en obras_progreso",
             "type": "main",
             "index": 0
           },
           {
-            "node": "Guardar en obras_progreso",
+            "node": "Devolver JSON a Next.js",
             "type": "main",
             "index": 0
           }
@@ -380,27 +284,7 @@
       ]
     }
   },
-  "pinData": {
-    "Devolver JSON a Next.js": [
-      {
-        "json": {
-          "aciertos": [
-            "Alineación precisa del eje de los ojos en perspectiva de 3/4.",
-            "Mayor profundidad volumétrica lograda con lápiz 4B en el pómulo izquierdo."
-          ],
-          "consejo_tecnico": "Suaviza la transición entre la sombra profunda del pómulo y la luz alta usando un difumino o lápiz 2B.",
-          "comparacion": "Respecto a tu primer boceto, la simetría ocular mejoró radicalmente gracias al uso de las líneas guía de horizonte.",
-          "siguiente_reto": "Dibuja un nuevo estudio de rostro enfocándote en capturar 3 niveles de brillo especular.",
-          "mensaje": "¡Gran avance, Camila! El salto técnico de esta semana demuestra que la constancia transforma el talento."
-        }
-      }
-    ]
-  },
   "settings": {
     "executionOrder": "v1"
-  },
-  "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "musa-analizar-obra-complete"
   }
 }

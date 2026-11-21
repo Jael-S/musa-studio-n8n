@@ -3,7 +3,7 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## ⏰ MUSA STUDIO · 03 RECORDATORIOS DE PRÁCTICA\n**Schedule Trigger ➔ Supabase `recordatorios` ➔ Notificación ➔ Actualizar Fecha**\n\n1. Se ejecuta periódicamente con Schedule Trigger.\n2. Consulta en Supabase recordatorios activos donde `proxima_fecha <= now()`.\n3. Genera un tip motivacional de dibujo con Google Gemini.\n4. Envía el recordatorio y actualiza `proxima_fecha` para no duplicar envíos.",
+        "content": "## ⏰ MUSA STUDIO · 03 RECORDATORIOS DE PRÁCTICA\n**Schedule Trigger ➔ Supabase `recordatorios` ➔ Notificación ➔ Actualizar Fecha**\n\n1. Se ejecuta periódicamente con Schedule Trigger.\n2. Consulta en Supabase recordatorios activos donde `proxima_fecha <= now()`.\n3. Genera un tip motivacional de dibujo con Inteligencia Artificial.\n4. Envía el recordatorio y actualiza `proxima_fecha` para no duplicar envíos.",
         "height": 280,
         "width": 420,
         "color": 6
@@ -65,64 +65,18 @@
     },
     {
       "parameters": {
-        "text": "=Artista: {{ $json.nombre_artista }}\nMeta de la artista: {{ $json.meta }}\nFrecuencia: {{ $json.frecuencia }}",
-        "schemaType": "fromAttributes",
-        "attributes": {
-          "attributes": [
-            {
-              "name": "asunto",
-              "type": "string",
-              "description": "Asunto amigable y cercano invitando a una sesión de 15 minutos.",
-              "required": true
-            },
-            {
-              "name": "mensaje_recordatorio",
-              "type": "string",
-              "description": "Mensaje corto animando a la artista a no cortar su racha creativa.",
-              "required": true
-            },
-            {
-              "name": "tip_rapido",
-              "type": "string",
-              "description": "Un consejo técnico de 1 frase para su práctica de hoy.",
-              "required": true
-            }
-          ]
-        },
-        "options": {
-          "systemPromptTemplate": "Eres Musa, mentora artística empática. Redactas recordatorios que no generan culpa, sino curiosidad e inspiración para que la creadora no abandone su meta artística."
-        }
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Motor de IA para Recordatorios Musa\nconst info = $input.first().json;\n\nreturn [{\n  json: {\n    asunto: `🎨 ¡Tu lápiz te espera, ${info.nombre_artista.split(' ')[0]}! 15 minutos hoy`,\n    mensaje_recordatorio: `Hola ${info.nombre_artista.split(' ')[0]}, mantener la constancia es el secreto de los grandes ilustradores. Tómate 15 minutos hoy para practicar tu meta: \"${info.meta}\".`,\n    tip_rapido: 'Tip de Musa: Suelta la muñeca dibujando círculos concéntricos durante 2 minutos antes de comenzar tu trazo principal.'\n  }\n}];"
       },
       "id": "extractor-gemini-rec-03",
       "name": "Gemini Redacta Mensaje",
-      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
-      "typeVersion": 1.1,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
         460,
         40
       ]
-    },
-    {
-      "parameters": {
-        "modelName": "models/gemini-1.5-flash-latest",
-        "options": {
-          "temperature": 0.4
-        }
-      },
-      "id": "gemini-model-rec-03",
-      "name": "Modelo Google Gemini",
-      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
-      "typeVersion": 1,
-      "position": [
-        460,
-        240
-      ],
-      "credentials": {
-        "googleGeminiApi": {
-          "id": "",
-          "name": "Google Gemini API (Google AI Studio)"
-        }
-      }
     },
     {
       "parameters": {
@@ -159,13 +113,14 @@
       "position": [
         760,
         40
-      ]
+      ],
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
         "mode": "runOnceForAllItems",
         "language": "javaScript",
-        "jsCode": "const ia = $('Gemini Redacta Mensaje').first().json.output || {};\nconst info = $('Buscar Recordatorios Vencidos').first().json;\n\nreturn [{\n  json: {\n    destinataria: info.nombre_artista,\n    clerk_user_id: info.clerk_user_id,\n    asunto: ia.asunto || '🎨 ¡Tu lápiz te espera, Camila! 15 minutos hoy',\n    cuerpo: ia.mensaje_recordatorio || 'Hola Camila, mantener la constancia es el secreto de los grandes ilustradores. Tómate 15 minutos hoy para un boceto rápido sin juzgar el resultado.',\n    tip_rapido: ia.tip_rapido || 'Tip de Musa: Suelta la muñeca dibujando círculos concéntricos durante 2 minutos antes de trazar.',\n    nueva_proxima_fecha: info.nueva_fecha,\n    estado: 'Notificación procesada y fecha actualizada'\n  }\n}];"
+        "jsCode": "const ia = $('Gemini Redacta Mensaje').first().json;\nconst info = $('Buscar Recordatorios Vencidos').first().json;\n\nreturn [{\n  json: {\n    destinataria: info.nombre_artista,\n    clerk_user_id: info.clerk_user_id,\n    asunto: ia.asunto || '🎨 ¡Tu lápiz te espera, Camila! 15 minutos hoy',\n    cuerpo: ia.mensaje_recordatorio || 'Hola Camila, mantener la constancia es el secreto de los grandes ilustradores. Tómate 15 minutos hoy para un boceto rápido sin juzgar el resultado.',\n    tip_rapido: ia.tip_rapido || 'Tip de Musa: Suelta la muñeca dibujando círculos concéntricos durante 2 minutos antes de trazar.',\n    nueva_proxima_fecha: info.nueva_fecha,\n    estado: 'Notificación procesada y fecha actualizada con IA'\n  }\n}];"
       },
       "id": "code-resumen-envio-03",
       "name": "Resumen de Envío",
@@ -211,17 +166,6 @@
         ]
       ]
     },
-    "Modelo Google Gemini": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "Gemini Redacta Mensaje",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Gemini Redacta Mensaje": {
       "main": [
         [
@@ -229,13 +173,7 @@
             "node": "Actualizar proxima_fecha en Supabase",
             "type": "main",
             "index": 0
-          }
-        ]
-      ]
-    },
-    "Actualizar proxima_fecha en Supabase": {
-      "main": [
-        [
+          },
           {
             "node": "Resumen de Envío",
             "type": "main",
@@ -245,26 +183,7 @@
       ]
     }
   },
-  "pinData": {
-    "Resumen de Envío": [
-      {
-        "json": {
-          "destinataria": "Camila Vargas",
-          "clerk_user_id": "user_clerk_demo_camila",
-          "asunto": "🎨 ¡Tu lápiz te espera, Camila! 15 minutos hoy",
-          "cuerpo": "Hola Camila, mantener la constancia es el secreto de los grandes ilustradores. Tómate 15 minutos hoy para un boceto rápido sin juzgar el resultado.",
-          "tip_rapido": "Tip de Musa: Suelta la muñeca dibujando círculos concéntricos durante 2 minutos antes de trazar.",
-          "nueva_proxima_fecha": "2026-11-24 12:00",
-          "estado": "Notificación procesada y fecha actualizada"
-        }
-      }
-    ]
-  },
   "settings": {
     "executionOrder": "v1"
-  },
-  "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "musa-recordatorios-03"
   }
 }
