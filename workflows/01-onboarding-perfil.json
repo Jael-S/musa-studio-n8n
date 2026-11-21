@@ -3,7 +3,7 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## 👤 MUSA STUDIO · 01 ONBOARDING PERFIL\n**Evento Clerk `user.created` ➔ Supabase `perfiles`**\n\nEste workflow escucha el webhook de registro de **Clerk** (basado en el workflow oficial 20 de Nodo Cero) y da de alta automáticamente a la creadora en la tabla `perfiles` de Supabase.",
+        "content": "## 👤 MUSA STUDIO · 01 ONBOARDING PERFIL\\n**Evento Clerk `user.created` ➔ Supabase `perfiles`**\\n\\nCrea o actualiza el perfil por `clerk_user_id`. Después de importar, configura Project URL y credenciales seguras de Supabase en n8n. En Clerk, suscribe este endpoint solo al evento `user.created` y valida la firma del webhook antes de producción.",
         "height": 260,
         "width": 380,
         "color": 6
@@ -90,7 +90,7 @@
       "parameters": {
         "mode": "runOnceForAllItems",
         "language": "javaScript",
-        "jsCode": "// Extrae los campos de Clerk (evento directo o datos simulados)\nconst body = $input.first().json.body || $input.first().json;\nconst data = body.data || body;\n\nconst clerkUserId = data.id || 'user_clerk_demo_camila';\nconst nombre = [data.first_name, data.last_name].filter(Boolean).join(' ') || data.nombre || 'Nueva Creadora';\nconst disciplina = data.disciplina || data.unsafe_metadata?.disciplina || 'Ilustración y dibujo';\nconst metaActual = data.meta_actual || data.unsafe_metadata?.meta_actual || 'Dominar anatomía y proporciones';\n\nreturn [{\n  json: {\n    clerk_user_id: clerkUserId,\n    nombre: nombre,\n    disciplina: disciplina,\n    meta_actual: metaActual,\n    evento: body.type || 'user.created'\n  }\n}];"
+        "jsCode": "// Extrae los campos del evento user.created de Clerk o los datos simulados\nconst body = $input.first().json.body || $input.first().json;\nconst data = body.data || body;\n\nconst clerkUserId = data.id || 'user_clerk_demo_camila';\nconst nombre = [data.first_name, data.last_name].filter(Boolean).join(' ') || data.nombre || 'Nueva Creadora';\nconst disciplina = data.disciplina || data.unsafe_metadata?.disciplina || 'Ilustración y dibujo';\nconst metaActual = data.meta_actual || data.unsafe_metadata?.meta_actual || 'Dominar anatomía y proporciones';\nconst email = data.email_addresses?.find(e => e.id === data.primary_email_address_id)?.email_address\n  || data.email_addresses?.[0]?.email_address\n  || data.email\n  || null;\n\nreturn [{\n  json: {\n    clerk_user_id: clerkUserId,\n    nombre,\n    email,\n    disciplina,\n    meta_actual: metaActual,\n    evento: body.type || 'user.created'\n  }\n}];"
       },
       "id": "code-procesar-clerk-01",
       "name": "Procesar Perfil de Usuaria",
@@ -126,7 +126,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"clerk_user_id\": \"{{ $json.clerk_user_id }}\",\n  \"nombre\": \"{{ $json.nombre }}\",\n  \"disciplina\": \"{{ $json.disciplina }}\",\n  \"meta_actual\": \"{{ $json.meta_actual }}\"\n}",
+        "jsonBody": "={\n  \"clerk_user_id\": \"{{ $json.clerk_user_id }}\",\n  \"nombre\": \"{{ $json.nombre }}\",\n  \"email\": \"{{ $json.email }}\",\n  \"disciplina\": \"{{ $json.disciplina }}\",\n  \"meta_actual\": \"{{ $json.meta_actual }}\"\n}",
         "options": {}
       },
       "id": "http-supabase-perfil-01",
@@ -136,8 +136,7 @@
       "position": [
         620,
         40
-      ],
-      "onError": "continueRegularOutput"
+      ]
     },
     {
       "parameters": {
