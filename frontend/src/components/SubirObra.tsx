@@ -23,6 +23,7 @@ type ResultadoMentoria = {
   siguiente_reto?: string;
   siguiente_reto_titulo?: string;
   siguiente_reto_consigna?: string;
+  mensaje?: string;
   mensaje_aliento?: string;
 };
 
@@ -40,11 +41,12 @@ export default function SubirObra({
   const [cargando, setCargando] = useState(false);
   const [resultado, setResultado] =
     useState<ResultadoMentoria | null>(null);
-
   const [modoDemo, setModoDemo] = useState(false);
 
   async function enviar(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    // Guardar la referencia antes de cualquier await.
     const form = e.currentTarget;
 
     if (cargando) return;
@@ -132,6 +134,7 @@ export default function SubirObra({
       setNotas("");
       setArchivo(null);
 
+      // Corrige el error e.currentTarget is null.
       form.reset();
     } catch (err) {
       setError(
@@ -246,9 +249,10 @@ export default function SubirObra({
         </button>
 
         <p className="mt-3 text-xs text-slate-500">
-          Tus obras se guardan en este navegador. Para
-          sincronizarlas entre dispositivos y recibir mentoría
-          con IA, falta conectar Supabase y n8n.
+          Tus obras se guardan en este navegador.
+          La mentoría utiliza n8n y Gemini cuando están
+          conectados. La sincronización permanente
+          con Supabase está pendiente.
         </p>
       </form>
 
@@ -304,7 +308,9 @@ export default function SubirObra({
                 Logros destacados
               </h3>
               <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-600">
-                {(resultado.aciertos ?? resultado.logros_destacados ?? []).map((logro, i) => (
+                {(resultado.aciertos ??
+                  resultado.logros_destacados ??
+                  []).map((logro, i) => (
                   <li key={i}>{logro}</li>
                 ))}
               </ul>
