@@ -1,82 +1,41 @@
 
 import { Suspense } from "react";
-import {
-  Show,
-  SignInButton,
-  SignUpButton,
-  UserButton,
-} from "@clerk/nextjs";
-
-function AuthButtons() {
-  return (
-    <>
-      <Show when="signed-out">
-        <div className="flex gap-3">
-          <SignInButton mode="modal">
-            <button className="rounded-lg border border-rose-700 px-4 py-2">
-              Iniciar sesión
-            </button>
-          </SignInButton>
-
-          <SignUpButton mode="modal">
-            <button className="rounded-lg bg-rose-700 px-4 py-2 text-white">
-              Registrarme
-            </button>
-          </SignUpButton>
-        </div>
-      </Show>
-
-      <Show when="signed-in">
-        <UserButton />
-      </Show>
-    </>
-  );
-}
-
-function WelcomeMessage() {
-  return (
-    <Show when="signed-in">
-      <div className="mt-10 rounded-2xl bg-white p-8 shadow-md">
-        <h3 className="text-2xl font-semibold text-rose-700">
-          ¡Bienvenida a Musa Studio!
-        </h3>
-
-        <p className="mt-3 text-slate-600">
-          Aquí podrás subir tus obras, consultar tu progreso
-          y recibir nuevos retos creativos.
-        </p>
-      </div>
-    </Show>
-  );
-}
+import { Show, SignInButton, SignUpButton } from "@clerk/nextjs";
+import Dashboard from "@/components/Dashboard";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-rose-50 text-slate-900">
-      <header className="mx-auto flex max-w-6xl items-center justify-between p-6">
-        <h1 className="text-2xl font-bold text-rose-700">
-          Musa Studio
-        </h1>
+    <Suspense fallback={<p className="p-8">Cargando Musa Studio...</p>}>
+      <Show when="signed-in">
+        <Dashboard />
+      </Show>
 
-        <Suspense fallback={<span>Cargando...</span>}>
-          <AuthButtons />
-        </Suspense>
-      </header>
+      <Show when="signed-out">
+        <main className="flex min-h-screen flex-col items-center justify-center bg-rose-50 px-6 text-center">
+          <h1 className="text-5xl font-bold text-rose-700">
+            Musa Studio
+          </h1>
 
-      <section className="mx-auto mt-28 max-w-3xl px-6 text-center">
-        <h2 className="text-5xl font-bold">
-          Tu creatividad merece crecer.
-        </h2>
+          <p className="mt-6 max-w-xl text-lg text-slate-600">
+            Tu espacio para crear, registrar tus avances y
+            desarrollar tu talento artístico con inteligencia artificial.
+          </p>
 
-        <p className="mt-6 text-lg text-slate-600">
-          Comparte tus obras, descubre tu progreso y recibe
-          recomendaciones personalizadas con inteligencia artificial.
-        </p>
+          <div className="mt-8 flex gap-4">
+            <SignInButton mode="modal">
+              <button className="rounded-xl border border-rose-700 px-6 py-3 text-rose-700">
+                Iniciar sesión
+              </button>
+            </SignInButton>
 
-        <Suspense fallback={null}>
-          <WelcomeMessage />
-        </Suspense>
-      </section>
-    </main>
+            <SignUpButton mode="modal">
+              <button className="rounded-xl bg-rose-700 px-6 py-3 text-white">
+                Registrarme
+              </button>
+            </SignUpButton>
+          </div>
+        </main>
+      </Show>
+    </Suspense>
   );
 }
