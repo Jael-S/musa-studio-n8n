@@ -136,7 +136,8 @@
       "position": [
         620,
         40
-      ]
+      ],
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
