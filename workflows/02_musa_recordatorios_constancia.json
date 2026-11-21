@@ -1,0 +1,225 @@
+{
+  "name": "Musa Studio · 02 Recordatorios de Constancia y Retos",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## ⏰ MUSA STUDIO · RECORDATORIOS DE CONSTANCIA Y RETOS\n**Nodo Cero Bolivia 2026**\n\nEste workflow combate el abandono artístico. Revisa los retos pendientes de las creadoras, redacta un mensaje de aliento con **Google Gemini** y envía un recordatorio amistoso.",
+        "height": 260,
+        "width": 380,
+        "color": 6
+      },
+      "id": "ed837247-dbd6-46b5-8dcc-554b60254d19",
+      "name": "Nota: Constancia Musa",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -500,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1,
+                4
+              ],
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger-musa-02",
+      "name": "Lunes y Jueves 09:00 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -80,
+        -40
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "manual-trigger-musa-02",
+      "name": "Al tocar Execute (Probar envío)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        52
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Simula la consulta a la tabla 'retos' de Supabase\n// para obtener creadoras con retos pendientes próximos a vencer\nreturn [\n  {\n    json: {\n      user_id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',\n      nombre_artista: 'Camila Vargas',\n      titulo_reto: 'Reto de Perspectiva Facial: Ojos en 3/4',\n      objetivo_tecnico: 'Corregir simetría y gradiente de sombra en pómulo',\n      dias_restantes: 2,\n      racha_actual: 5\n    }\n  }\n];"
+      },
+      "id": "code-retos-pendientes-02",
+      "name": "Obtener Retos Pendientes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        180,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "text": "=Artista: {{ $json.nombre_artista }}\nReto activo: {{ $json.titulo_reto }}\nObjetivo: {{ $json.objetivo_tecnico }}\nDías restantes: {{ $json.dias_restantes }}\nRacha de constancia: {{ $json.racha_actual }} días",
+        "schemaType": "fromAttributes",
+        "attributes": {
+          "attributes": [
+            {
+              "name": "asunto",
+              "type": "string",
+              "description": "Asunto inspirador y cercano para el mensaje.",
+              "required": true
+            },
+            {
+              "name": "mensaje_recordatorio",
+              "type": "string",
+              "description": "Mensaje corto (máximo 3 párrafos pequeños) animando a la artista a dedicar 15 minutos hoy a su boceto.",
+              "required": true
+            },
+            {
+              "name": "tip_rapido",
+              "type": "string",
+              "description": "Un consejo técnico de 1 frase para desbloquear su práctica de hoy.",
+              "required": true
+            }
+          ]
+        },
+        "options": {
+          "systemPromptTemplate": "Eres Musa, mentora artística empática. Redactas recordatorios que no generan culpa, sino curiosidad e inspiración para que la creadora no abandone su meta artística."
+        }
+      },
+      "id": "extractor-gemini-musa-02",
+      "name": "Gemini Redacta Recordatorio",
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.1,
+      "position": [
+        460,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "id": "gemini-model-musa-02",
+      "name": "Modelo Gemini Recordatorios",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        460,
+        240
+      ],
+      "credentials": {
+        "googleGeminiApi": {
+          "id": "",
+          "name": "Google Gemini API (Google AI Studio)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const ia = $input.first().json.output || {};\nconst artista = $('Obtener Retos Pendientes').first().json;\n\nreturn [{\n  json: {\n    destinataria: artista.nombre_artista,\n    asunto: ia.asunto || '✨ ¡Tu lienzo te espera, Camila! 15 minutos para tu reto',\n    cuerpo: ia.mensaje_recordatorio || 'Hola Camila, tu racha de 5 días demuestra tu compromiso. Tienes 2 días para tu reto de ojos en 3/4. No busques perfección, solo fluidez en el trazo.',\n    tip_rapido: ia.tip_rapido || 'Recuerda: traza primero el eje curvo de la frente a la barbilla.',\n    canal: 'Notificación App / Correo',\n    estado_envio: 'Enviado con éxito'\n  }\n}];"
+      },
+      "id": "code-salida-recordatorio-02",
+      "name": "Resumen de Notificación",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        760,
+        40
+      ]
+    }
+  ],
+  "connections": {
+    "Lunes y Jueves 09:00 AM": {
+      "main": [
+        [
+          {
+            "node": "Obtener Retos Pendientes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Al tocar Execute (Probar envío)": {
+      "main": [
+        [
+          {
+            "node": "Obtener Retos Pendientes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtener Retos Pendientes": {
+      "main": [
+        [
+          {
+            "node": "Gemini Redacta Recordatorio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Modelo Gemini Recordatorios": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Gemini Redacta Recordatorio",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Redacta Recordatorio": {
+      "main": [
+        [
+          {
+            "node": "Resumen de Notificación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {
+    "Resumen de Notificación": [
+      {
+        "json": {
+          "destinataria": "Camila Vargas",
+          "asunto": "🎨 ¡Tu lápiz te extraña, Camila! 15 minutos hoy",
+          "cuerpo": "Hola Camila, llevas una racha hermosa de 5 días creando. Tienes 2 días restantes para tu Reto de Ojos en 3/4. No necesitas terminar una obra maestra hoy: con 15 minutos de boceto rápido mantendrás tu mente despierta.",
+          "tip_rapido": "Tip de Musa: Antes de sombrear, aleja la hoja a un metro de distancia para chequear la simetría con ojos entrecerrados.",
+          "canal": "Notificación App / Correo",
+          "estado_envio": "Enviado con éxito"
+        }
+      }
+    ]
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "musa-studio-nodo-cero-02"
+  }
+}

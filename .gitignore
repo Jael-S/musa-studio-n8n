@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.py
+
+# Archivos de trabajo temporal de investigación
+page.html
+catalogo.json
+app.js
+menciones.md
+presentar.md
+template.yml
+wf-*.json
+*.log
